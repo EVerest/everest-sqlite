@@ -29,11 +29,13 @@ include/database/
 
 ## Getting Started
 
+The recommended way to build this project is to use EVerests dependency manager EDM.
+
 ### Dependencies
 
 - **SQLite3**
 - **nlohmann_json**
-- **[everest-cmake](https://github.com/EVerest/everest-cmake)**
+- (Optional) **[everest-cmake](https://github.com/EVerest/everest-cmake)**
 - (Optional) **GTest** for unit testing
 
 ### Build
@@ -55,6 +57,13 @@ cmake -DBUILD_TESTING=ON ..
 make
 ctest
 make everest-sqlite_gcovr_coverage # to generate a coverage report
+```
+
+To build without EDM, you can use:
+
+```bash
+cmake -DDISABLE_EDM=ON ..
+make
 ```
 
 ## Usage

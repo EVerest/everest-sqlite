@@ -2,9 +2,6 @@
 add_library(sqlite)
 add_library(everest::sqlite ALIAS sqlite)
 
-find_package(SQLite3 REQUIRED)
-find_package(nlohmann_json REQUIRED)
-
 target_sources(sqlite
     PRIVATE
         database/sqlite/statement.cpp

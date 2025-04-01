@@ -19,16 +19,18 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
-setup_target_for_coverage_gcovr_html(
-    NAME ${PROJECT_NAME}_gcovr_coverage
-    EXECUTABLE ctest
-    DEPENDENCIES ${TEST_TARGET_NAME}
-    EXCLUDE "tests/*"
-)
+if (EVEREST_SQLITE_BUILD_TESTING AND NOT DISABLE_EDM)
+    setup_target_for_coverage_gcovr_html(
+        NAME ${PROJECT_NAME}_gcovr_coverage
+        EXECUTABLE ctest
+        DEPENDENCIES ${TEST_TARGET_NAME}
+        EXCLUDE "tests/*"
+    )
 
-setup_target_for_coverage_gcovr_xml(
-    NAME ${PROJECT_NAME}_gcovr_coverage_xml
-    EXECUTABLE ctest
-    DEPENDENCIES ${TEST_TARGET_NAME}
-    EXCLUDE "tests/*"
-)
+    setup_target_for_coverage_gcovr_xml(
+        NAME ${PROJECT_NAME}_gcovr_coverage_xml
+        EXECUTABLE ctest
+        DEPENDENCIES ${TEST_TARGET_NAME}
+        EXCLUDE "tests/*"
+    )
+endif()
