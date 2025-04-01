@@ -41,6 +41,28 @@ add_subdirectory(lib)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# packaging
+if (EVEREST_SQLITE_INSTALL)
+    install(
+        TARGETS everest_sqlite
+        EXPORT everest_sqlite-targets
+        LIBRARY
+    )
+
+    install(
+        DIRECTORY include/
+        TYPE INCLUDE
+    )
+
+    if (NOT DISABLE_EDM)
+        evc_setup_package(
+            NAME everest_sqlite-targets
+            NAMESPACE everest
+            EXPORT everest_sqlite-targets
+        )
+    endif()
+endif()
+
 if(EVEREST_SQLITE_BUILD_TESTING)
     include(CTest)
     add_subdirectory(tests)
