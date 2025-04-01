@@ -50,9 +50,9 @@ Using the database migrations is fairly straightforward. Most of the details are
   - **Old database files should be removed** when reinitializing a database to ensure a clean start with a well-defined schema.
   - All migrations should be performed **before any logic that depends on the schema is executed**.
 
-## Integration for libraries using libsqlite
+## Integration for libraries using everest-sqlite
 
-If your library or module integrates `libsqlite`, here's how you can hook into the migration support to safely handle schema changes between releases:
+If your library or module integrates `everest-sqlite`, here's how you can hook into the migration support to safely handle schema changes between releases:
 
 ### 1. Place your migration files
 
@@ -71,17 +71,17 @@ Follow the filename convention:
 - `X_up.sql` applies a schema change to version X.
 - `X_down.sql` undoes that same schema change.
 
-### 2. Use `DatabaseSchemaUpdater` during initialization
+### 2. Use `SchemaUpdater` during initialization
 
 Before you use any tables or schema-specific logic in your module, run the schema updater:
 
 ```cpp
-#include <database/sqlite/sqlite_schema_updater.hpp>
+#include <database/sqlite/schema_updater.hpp>
 
-DatabaseConnection db("path/to/database.db");
+Connection db("path/to/database.db");
 db.open_connection();
 
-DatabaseSchemaUpdater updater(&db);
+SchemaUpdater updater(&db);
 const uint32_t TARGET_SCHEMA_VERSION = /* set via CMake or hardcoded */;
 
 if (!updater.apply_migration_files("path/to/migrations", TARGET_SCHEMA_VERSION)) {

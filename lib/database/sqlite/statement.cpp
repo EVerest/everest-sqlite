@@ -3,17 +3,19 @@
 
 #include <iostream>
 
-#include <database/database_exceptions.hpp>
-#include <database/sqlite/sqlite_statement.hpp>
+#include <database/exceptions.hpp>
+#include <database/sqlite/statement.hpp>
 
-SQLiteStatement::SQLiteStatement(sqlite3* db, const std::string& query) : db(db), stmt(nullptr) {
+namespace everest::db::sqlite {
+
+Statement::Statement(sqlite3* db, const std::string& query) : db(db), stmt(nullptr) {
     if (sqlite3_prepare_v2(db, query.c_str(), query.size(), &this->stmt, nullptr) != SQLITE_OK) {
         std::cerr << sqlite3_errmsg(db) << std::endl;
         throw QueryExecutionException("Could not prepare statement for database.");
     }
 }
 
-SQLiteStatement::~SQLiteStatement() {
+Statement::~Statement() {
     if (this->stmt != nullptr) {
         if (sqlite3_finalize(this->stmt) != SQLITE_OK) {
             std::cout << "Error finalizing statement: " << sqlite3_errmsg(this->db) << std::endl;
@@ -21,25 +23,25 @@ SQLiteStatement::~SQLiteStatement() {
     }
 }
 
-int SQLiteStatement::step() {
+int Statement::step() {
     return sqlite3_step(this->stmt);
 }
 
-int SQLiteStatement::reset() {
+int Statement::reset() {
     return sqlite3_reset(this->stmt);
 }
 
-int SQLiteStatement::changes() {
+int Statement::changes() {
     // Rows affected by the last INSERT, UPDATE, DELETE
     return sqlite3_changes(this->db);
 }
 
-int SQLiteStatement::bind_text(const int idx, const std::string& val, SQLiteString lifetime) {
+int Statement::bind_text(const int idx, const std::string& val, SQLiteString lifetime) {
     return sqlite3_bind_text(this->stmt, idx, val.c_str(), val.length(),
                              lifetime == SQLiteString::Static ? SQLITE_STATIC : SQLITE_TRANSIENT);
 }
 
-int SQLiteStatement::bind_text(const std::string& param, const std::string& val, SQLiteString lifetime) {
+int Statement::bind_text(const std::string& param, const std::string& val, SQLiteString lifetime) {
     int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
@@ -47,11 +49,11 @@ int SQLiteStatement::bind_text(const std::string& param, const std::string& val,
     return bind_text(index, val, lifetime);
 }
 
-int SQLiteStatement::bind_int(const int idx, const int val) {
+int Statement::bind_int(const int idx, const int val) {
     return sqlite3_bind_int(this->stmt, idx, val);
 }
 
-int SQLiteStatement::bind_int(const std::string& param, const int val) {
+int Statement::bind_int(const std::string& param, const int val) {
     int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
@@ -59,12 +61,12 @@ int SQLiteStatement::bind_int(const std::string& param, const int val) {
     return bind_int(index, val);
 }
 
-int SQLiteStatement::bind_int64(const int idx, const int64_t val) {
+int Statement::bind_int64(const int idx, const int64_t val) {
     std::cout << "val: " << val << std::endl;
     return sqlite3_bind_int64(this->stmt, idx, val);
 }
 
-int SQLiteStatement::bind_int64(const std::string& param, const int64_t val) {
+int Statement::bind_int64(const std::string& param, const int64_t val) {
     std::cout << "val2: " << val << std::endl;
     int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
@@ -73,11 +75,11 @@ int SQLiteStatement::bind_int64(const std::string& param, const int64_t val) {
     return bind_int64(index, val);
 }
 
-int SQLiteStatement::bind_double(const int idx, const double val) {
+int Statement::bind_double(const int idx, const double val) {
     return sqlite3_bind_double(this->stmt, idx, val);
 }
 
-int SQLiteStatement::bind_double(const std::string& param, const double val) {
+int Statement::bind_double(const std::string& param, const double val) {
     int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
@@ -85,11 +87,11 @@ int SQLiteStatement::bind_double(const std::string& param, const double val) {
     return bind_double(index, val);
 }
 
-int SQLiteStatement::bind_null(const int idx) {
+int Statement::bind_null(const int idx) {
     return sqlite3_bind_null(this->stmt, idx);
 }
 
-int SQLiteStatement::bind_null(const std::string& param) {
+int Statement::bind_null(const std::string& param) {
     int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
@@ -97,19 +99,19 @@ int SQLiteStatement::bind_null(const std::string& param) {
     return bind_null(index);
 }
 
-int SQLiteStatement::get_number_of_rows() {
+int Statement::get_number_of_rows() {
     return sqlite3_data_count(this->stmt);
 }
 
-int SQLiteStatement::column_type(const int idx) {
+int Statement::column_type(const int idx) {
     return sqlite3_column_type(this->stmt, idx);
 }
 
-std::string SQLiteStatement::column_text(const int idx) {
+std::string Statement::column_text(const int idx) {
     return reinterpret_cast<const char*>(sqlite3_column_text(this->stmt, idx));
 }
 
-std::optional<std::string> SQLiteStatement::column_text_nullable(const int idx) {
+std::optional<std::string> Statement::column_text_nullable(const int idx) {
     auto p = sqlite3_column_text(this->stmt, idx);
     if (p != nullptr) {
         return reinterpret_cast<const char*>(p);
@@ -118,14 +120,16 @@ std::optional<std::string> SQLiteStatement::column_text_nullable(const int idx) 
     }
 }
 
-int SQLiteStatement::column_int(const int idx) {
+int Statement::column_int(const int idx) {
     return sqlite3_column_int(this->stmt, idx);
 }
 
-int64_t SQLiteStatement::column_int64(const int64_t idx) {
+int64_t Statement::column_int64(const int64_t idx) {
     return sqlite3_column_int64(this->stmt, idx);
 }
 
-double SQLiteStatement::column_double(const int idx) {
+double Statement::column_double(const int idx) {
     return sqlite3_column_double(this->stmt, idx);
 }
+
+} // namespace everest::db::sqlite

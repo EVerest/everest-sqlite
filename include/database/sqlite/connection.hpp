@@ -9,17 +9,19 @@
 #include <mutex>
 #include <sqlite3.h>
 
-#include <database/sqlite/sqlite_statement.hpp>
+#include <database/sqlite/statement.hpp>
 
 namespace fs = std::filesystem;
 namespace fsstd = std;
 
+namespace everest::db::sqlite {
+
 /// \brief Helper class for transactions. Will lock the database interface from new transaction until commit() or
 /// rollback() is called or the object destroyed
-class DatabaseTransactionInterface {
+class TransactionInterface {
 public:
     /// \brief Destructor of transaction: Will by default rollback unless commit() is called
-    virtual ~DatabaseTransactionInterface() = default;
+    virtual ~TransactionInterface() = default;
 
     /// \brief Commits the transaction and release the lock on the database interface
     virtual void commit() = 0;
@@ -28,9 +30,9 @@ public:
     virtual void rollback() = 0;
 };
 
-class DatabaseConnectionInterface {
+class ConnectionInterface {
 public:
-    virtual ~DatabaseConnectionInterface() = default;
+    virtual ~ConnectionInterface() = default;
 
     /// \brief Opens the database connection. Returns true if succeeded.
     virtual bool open_connection() = 0;
@@ -40,14 +42,14 @@ public:
 
     /// \brief Start a transaction on the database. Returns an object holding the transaction.
     /// \note This function can block until the previous transaction is finished.
-    [[nodiscard]] virtual std::unique_ptr<DatabaseTransactionInterface> begin_transaction() = 0;
+    [[nodiscard]] virtual std::unique_ptr<TransactionInterface> begin_transaction() = 0;
 
     /// \brief Immediately executes \p statement. Returns true if succeeded.
     virtual bool execute_statement(const std::string& statement) = 0;
 
-    /// \brief Returns a new SQLiteStatementInterface to be used to perform more advanced sql statements.
+    /// \brief Returns a new StatementInterface to be used to perform more advanced sql statements.
     /// \note Will throw an std::runtime_error if the statement can't be prepared
-    virtual std::unique_ptr<SQLiteStatementInterface> new_statement(const std::string& sql) = 0;
+    virtual std::unique_ptr<StatementInterface> new_statement(const std::string& sql) = 0;
 
     /// \brief Returns the latest error message from sqlite3.
     virtual const char* get_error_message() = 0;
@@ -65,7 +67,7 @@ public:
     virtual uint32_t get_user_version() = 0;
 };
 
-class DatabaseConnection : public DatabaseConnectionInterface {
+class Connection : public ConnectionInterface {
 private:
     sqlite3* db;
     const fs::path database_file_path;
@@ -75,17 +77,17 @@ private:
     bool close_connection_internal(bool force_close);
 
 public:
-    explicit DatabaseConnection(const fs::path& database_file_path) noexcept;
+    explicit Connection(const fs::path& database_file_path) noexcept;
 
-    virtual ~DatabaseConnection();
+    virtual ~Connection();
 
     bool open_connection() override;
     bool close_connection() override;
 
-    [[nodiscard]] std::unique_ptr<DatabaseTransactionInterface> begin_transaction() override;
+    [[nodiscard]] std::unique_ptr<TransactionInterface> begin_transaction() override;
 
     bool execute_statement(const std::string& statement) override;
-    std::unique_ptr<SQLiteStatementInterface> new_statement(const std::string& sql) override;
+    std::unique_ptr<StatementInterface> new_statement(const std::string& sql) override;
 
     const char* get_error_message() override;
 
@@ -96,3 +98,5 @@ public:
     uint32_t get_user_version() override;
     void set_user_version(uint32_t version) override;
 };
+
+} // namespace everest::db::sqlite

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#include <database/database_exceptions.hpp>
-#include <database/sqlite/sqlite_connection.hpp>
-#include <database/sqlite/sqlite_statement.hpp>
+#include <database/exceptions.hpp>
+#include <database/sqlite/connection.hpp>
+#include <database/sqlite/statement.hpp>
 #include <gtest/gtest.h>
 
 #include <filesystem>
@@ -11,13 +11,15 @@
 
 namespace fs = std::filesystem;
 
+namespace everest::db::sqlite {
+
 class SQLiteStatementTest : public ::testing::Test {
 protected:
-    std::unique_ptr<DatabaseConnection> db;
+    std::unique_ptr<Connection> db;
 
     void SetUp() override {
         fs::path db_path = "file::memory:?cache=shared";
-        db = std::make_unique<DatabaseConnection>(db_path);
+        db = std::make_unique<Connection>(db_path);
         ASSERT_TRUE(db->open_connection());
 
         ASSERT_TRUE(db->execute_statement(
@@ -84,3 +86,5 @@ TEST_F(SQLiteStatementTest, ResetAndReuseStatement) {
     ASSERT_EQ(select_stmt->step(), SQLITE_ROW);
     EXPECT_EQ(select_stmt->column_int(0), 2);
 }
+
+} // namespace everest::db::sqlite

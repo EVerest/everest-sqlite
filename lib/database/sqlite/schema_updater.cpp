@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#include <database/sqlite/sqlite_schema_updater.hpp>
+#include <database/sqlite/schema_updater.hpp>
 
 #include <fstream>
 #include <iostream>
 #include <regex>
 
-// Helper functions
+namespace everest::db::sqlite {
 
 enum class Direction {
     Up,
@@ -134,10 +134,10 @@ std::optional<std::vector<MigrationFile>> get_migration_file_sequence(const fs::
     return list;
 }
 
-DatabaseSchemaUpdater::DatabaseSchemaUpdater(DatabaseConnectionInterface* database) noexcept : database(database) {
+SchemaUpdater::SchemaUpdater(ConnectionInterface* database) noexcept : database(database) {
 }
 
-bool DatabaseSchemaUpdater::apply_migration_files(const fs::path& migration_file_directory,
+bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directory,
                                                   uint32_t target_schema_version) {
     if (!fs::is_directory(migration_file_directory)) {
         std::cout << "Migration files must be in a directory: " << migration_file_directory.c_str() << std::endl;
@@ -208,3 +208,5 @@ bool DatabaseSchemaUpdater::apply_migration_files(const fs::path& migration_file
     this->database->close_connection();
     return retval;
 }
+
+} // namespace everest::db::sqlite

@@ -3,16 +3,18 @@
 
 #pragma once
 
-#include <database/sqlite/sqlite_connection.hpp>
+#include <database/sqlite/connection.hpp>
 
-class DatabaseSchemaUpdater {
+namespace everest::db::sqlite {
+
+class SchemaUpdater {
 private:
-    DatabaseConnectionInterface* database;
+    ConnectionInterface* database;
 
 public:
     /// \brief Class that can apply migration files to a database to update the schema
     /// \param database Interface for the database connection
-    explicit DatabaseSchemaUpdater(DatabaseConnectionInterface* database) noexcept;
+    explicit SchemaUpdater(ConnectionInterface* database) noexcept;
 
     /// \brief Apply migration files to a database to update the schema
     /// \param sql_migration_files_path Filesystem path to migration file folder
@@ -21,3 +23,5 @@ public:
     /// fails.
     bool apply_migration_files(const fs::path& migration_file_directory, uint32_t target_schema_version);
 };
+
+} // namespace everest::db::sqlite

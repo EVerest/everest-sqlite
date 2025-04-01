@@ -2,8 +2,10 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "database_testing_utils.hpp"
-#include <database/sqlite/sqlite_schema_updater.hpp>
+#include <database/sqlite/schema_updater.hpp>
 #include <fstream>
+
+namespace everest::db::sqlite {
 
 struct MigrationFile {
     std::string_view name;
@@ -66,12 +68,12 @@ public:
 };
 
 TEST_F(DatabaseSchemaUpdaterTest, FolderDoesNotExist) {
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path / "invalid", 1));
 }
 
 TEST_F(DatabaseSchemaUpdaterTest, TargetVersionInvalid) {
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 0));
 }
 
@@ -79,7 +81,7 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyInitialMigrationFile) {
 
     this->WriteMigrationFile(migration_file_up_1_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 1));
 
@@ -91,7 +93,7 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyInitialMigrationFileEmptyName) {
 
     this->WriteMigrationFile(migration_file_up_1_valid_empty_name);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 1));
 
@@ -104,7 +106,7 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyInitialMigrationFileAlreadyUpToDate) {
     this->WriteMigrationFile(migration_file_up_1_valid);
     this->SetUserVersion(1);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 1));
 
@@ -117,7 +119,7 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyInitialMigrationFileVersionToHigh) {
     this->WriteMigrationFile(migration_file_up_1_valid);
     this->SetUserVersion(2);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 1));
 
@@ -129,7 +131,7 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyInvalidInitialMigrationFile) {
 
     this->WriteMigrationFile(migration_file_up_1_invalid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 1));
 
@@ -141,7 +143,7 @@ TEST_F(DatabaseSchemaUpdaterTest, MissingInitialMigrationFile) {
 
     this->WriteMigrationFile(migration_file_up_2_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 1));
 
@@ -156,7 +158,7 @@ TEST_F(DatabaseSchemaUpdaterTest, SequenceNotValidUnevenNrOfFiles) {
     this->WriteMigrationFile(migration_file_up_3_valid);
     this->WriteMigrationFile(migration_file_down_3_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 1));
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 2));
@@ -172,7 +174,7 @@ TEST_F(DatabaseSchemaUpdaterTest, SequenceNotValidNotEnoughFiles) {
     this->WriteMigrationFile(migration_file_up_2_valid);
     this->WriteMigrationFile(migration_file_down_2_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 3));
 
@@ -188,7 +190,7 @@ TEST_F(DatabaseSchemaUpdaterTest, SequenceNotValidMissingDownFile) {
     this->WriteMigrationFile(migration_file_up_4_valid);
     this->WriteMigrationFile(migration_file_down_3_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 1));
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 2));
@@ -206,7 +208,7 @@ TEST_F(DatabaseSchemaUpdaterTest, SequenceNotValidMissingUpFile) {
     this->WriteMigrationFile(migration_file_down_3_valid);
     this->WriteMigrationFile(migration_file_down_4_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 1));
     EXPECT_FALSE(updater.apply_migration_files(this->migration_files_path, 2));
@@ -224,7 +226,7 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyMultipleMigrationFilesStepByStep) {
     this->WriteMigrationFile(migration_file_down_2_valid);
     this->WriteMigrationFile(migration_file_down_3_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 1));
     this->ExpectUserVersion(1);
@@ -265,7 +267,7 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyMultipleMigrationFilesAtOnce) {
     this->WriteMigrationFile(migration_file_down_2_valid);
     this->WriteMigrationFile(migration_file_down_3_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 3));
     this->ExpectUserVersion(3);
@@ -288,7 +290,7 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyMultipleMigrationFilesAtOnceWithFailure) 
     this->WriteMigrationFile(migration_file_down_2_valid);
     this->WriteMigrationFile(migration_file_down_3_valid);
 
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 1));
     this->ExpectUserVersion(1);
@@ -307,3 +309,5 @@ TEST_F(DatabaseSchemaUpdaterTest, ApplyMultipleMigrationFilesAtOnceWithFailure) 
 
     this->ExpectUserVersion(1);
 }
+
+} // namespace everest::db::sqlite

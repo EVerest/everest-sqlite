@@ -9,17 +9,19 @@
 
 #include <sqlite3.h>
 
+namespace everest::db::sqlite {
+
 /// @brief Type used to indicate if SQLite should make a internal copy of a string
 enum class SQLiteString {
     Static,   /// Indicates string will be valid for the whole statement
     Transient /// Indicates string might change during statement, SQLite should make a copy
 };
 
-/// \brief Interface for SQLiteStatement wrapper class that handles finalization, step, binding and column access of
+/// \brief Interface for Statement wrapper class that handles finalization, step, binding and column access of
 /// sqlite3_stmt
-class SQLiteStatementInterface {
+class StatementInterface {
 public:
-    virtual ~SQLiteStatementInterface() = default;
+    virtual ~StatementInterface() = default;
 
     virtual int step() = 0;
     virtual int reset() = 0;
@@ -47,14 +49,14 @@ public:
 };
 
 /// \brief RAII wrapper class that handles finalization, step, binding and column access of sqlite3_stmt
-class SQLiteStatement : public SQLiteStatementInterface {
+class Statement : public StatementInterface {
 private:
     sqlite3_stmt* stmt;
     sqlite3* db;
 
 public:
-    SQLiteStatement(sqlite3* db, const std::string& query);
-    ~SQLiteStatement();
+    Statement(sqlite3* db, const std::string& query);
+    ~Statement();
 
     int step() override;
     int reset() override;
@@ -80,3 +82,5 @@ public:
     int64_t column_int64(const int64_t) override;
     double column_double(const int idx) override;
 };
+
+} // namespace everest::db::sqlite

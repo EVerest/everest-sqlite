@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(libsqlite VERSION 0.1
+project(everest-sqlite VERSION 0.1
         DESCRIPTION "SQLite wrapper"
 		LANGUAGES CXX C
 )
@@ -10,7 +10,7 @@ find_package(everest-cmake 0.1 REQUIRED
 )
 
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
-    set(LIBSQLITE_BUILD_TESTING ON)
+    set(EVEREST_SQLITE_BUILD_TESTING ON)
     evc_include(CodeCoverage)
     append_coverage_compiler_flags()
 endif()
@@ -25,7 +25,7 @@ add_subdirectory(lib)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-if(LIBSQLITE_BUILD_TESTING)
+if(EVEREST_SQLITE_BUILD_TESTING)
     include(CTest)
     add_subdirectory(tests)
     set(CMAKE_BUILD_TYPE Debug)

@@ -3,19 +3,21 @@
 
 #pragma once
 
-#include <database/sqlite/sqlite_connection.hpp>
+#include <database/sqlite/connection.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 using namespace std::string_literals;
 
+namespace everest::db::sqlite {
+
 class DatabaseTestingUtils : public ::testing::Test {
 
 protected:
-    std::unique_ptr<DatabaseConnectionInterface> database;
+    std::unique_ptr<ConnectionInterface> database;
 
 public:
-    DatabaseTestingUtils() : database(std::make_unique<DatabaseConnection>("file::memory:?cache=shared")) {
+    DatabaseTestingUtils() : database(std::make_unique<Connection>("file::memory:?cache=shared")) {
         EXPECT_TRUE(this->database->open_connection());
     }
 
@@ -33,7 +35,7 @@ public:
     bool DoesTableExist(std::string_view table) {
         const std::string statement = "SELECT name FROM sqlite_master WHERE type='table' AND name=@table_name";
 
-        std::unique_ptr<SQLiteStatementInterface> table_exists_statement = this->database->new_statement(statement);
+        std::unique_ptr<StatementInterface> table_exists_statement = this->database->new_statement(statement);
         table_exists_statement->bind_text("@table_name", std::string(table), SQLiteString::Transient);
         const int status = table_exists_statement->step();
         const int number_of_rows = table_exists_statement->get_number_of_rows();
@@ -44,3 +46,5 @@ public:
         return this->database->execute_statement("SELECT "s + column.data() + " FROM " + table.data() + " LIMIT 1;");
     }
 };
+
+} // namespace everest::db::sqlite

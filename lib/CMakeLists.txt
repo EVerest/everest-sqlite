@@ -7,9 +7,9 @@ find_package(nlohmann_json REQUIRED)
 
 target_sources(sqlite
     PRIVATE
-        database/sqlite/sqlite_statement.cpp
-        database/sqlite/sqlite_connection.cpp
-        database/sqlite/sqlite_schema_updater.cpp
+        database/sqlite/statement.cpp
+        database/sqlite/connection.cpp
+        database/sqlite/schema_updater.cpp
 )
 
 target_link_libraries(sqlite

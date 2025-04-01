@@ -3,19 +3,21 @@
 
 #include <iostream>
 
-#include <database/database_exceptions.hpp>
-#include <database/sqlite/sqlite_connection.hpp>
+#include <database/exceptions.hpp>
+#include <database/sqlite/connection.hpp>
 
 using namespace std::chrono_literals;
 using namespace std::string_literals;
 
-class DatabaseTransaction : public DatabaseTransactionInterface {
+namespace everest::db::sqlite {
+
+class DatabaseTransaction : public TransactionInterface {
 private:
-    DatabaseConnection& database;
+    Connection& database;
     std::unique_lock<std::timed_mutex> mutex;
 
 public:
-    DatabaseTransaction(DatabaseConnection& database, std::unique_lock<std::timed_mutex> mutex) :
+    DatabaseTransaction(Connection& database, std::unique_lock<std::timed_mutex> mutex) :
         database{database}, mutex{std::move(mutex)} {
         this->database.execute_statement("BEGIN TRANSACTION");
     }
@@ -43,18 +45,18 @@ public:
     }
 };
 
-DatabaseConnection::DatabaseConnection(const fs::path& database_file_path) noexcept :
+Connection::Connection(const fs::path& database_file_path) noexcept :
     db(nullptr), database_file_path(database_file_path), open_count(0) {
 }
 
-DatabaseConnection::~DatabaseConnection() {
+Connection::~Connection() {
     // There could still be a transaction active and we have no way to abort it,
     // so wait a few seconds to give it time to finish
     auto lock = std::unique_lock(this->transaction_mutex, 2s);
     close_connection_internal(true);
 }
 
-bool DatabaseConnection::open_connection() {
+bool Connection::open_connection() {
     if (this->open_count.fetch_add(1) != 0) {
         std::cout << "Connection already opened" << std::endl;
         return true;
@@ -77,11 +79,11 @@ bool DatabaseConnection::open_connection() {
     return true;
 }
 
-bool DatabaseConnection::close_connection() {
+bool Connection::close_connection() {
     return this->close_connection_internal(false);
 }
 
-bool DatabaseConnection::close_connection_internal(bool force_close) {
+bool Connection::close_connection_internal(bool force_close) {
     if (!force_close && this->open_count.fetch_sub(1) != 1) {
         std::cout << "Connection should remain open for other users" << std::endl;
         return true;
@@ -108,7 +110,7 @@ bool DatabaseConnection::close_connection_internal(bool force_close) {
     return true;
 }
 
-bool DatabaseConnection::execute_statement(const std::string& statement) {
+bool Connection::execute_statement(const std::string& statement) {
     char* err_msg = nullptr;
     if (sqlite3_exec(this->db, statement.c_str(), NULL, NULL, &err_msg) != SQLITE_OK) {
         std::cout << "Could not execute statement \"" << statement << "\": " << err_msg;
@@ -118,27 +120,27 @@ bool DatabaseConnection::execute_statement(const std::string& statement) {
     return true;
 }
 
-const char* DatabaseConnection::get_error_message() {
+const char* Connection::get_error_message() {
     return sqlite3_errmsg(this->db);
 }
 
-std::unique_ptr<DatabaseTransactionInterface> DatabaseConnection::begin_transaction() {
+std::unique_ptr<TransactionInterface> Connection::begin_transaction() {
     return std::make_unique<DatabaseTransaction>(*this, std::unique_lock(this->transaction_mutex));
 }
 
-std::unique_ptr<SQLiteStatementInterface> DatabaseConnection::new_statement(const std::string& sql) {
-    return std::make_unique<SQLiteStatement>(this->db, sql);
+std::unique_ptr<StatementInterface> Connection::new_statement(const std::string& sql) {
+    return std::make_unique<Statement>(this->db, sql);
 }
 
-bool DatabaseConnection::clear_table(const std::string& table) {
+bool Connection::clear_table(const std::string& table) {
     return this->execute_statement("DELETE FROM "s + table);
 }
 
-int64_t DatabaseConnection::get_last_inserted_rowid() {
+int64_t Connection::get_last_inserted_rowid() {
     return sqlite3_last_insert_rowid(this->db);
 }
 
-uint32_t DatabaseConnection::get_user_version() {
+uint32_t Connection::get_user_version() {
     auto statement = this->new_statement("PRAGMA user_version");
 
     if (statement->step() != SQLITE_ROW) {
@@ -147,10 +149,12 @@ uint32_t DatabaseConnection::get_user_version() {
     return statement->column_int(0);
 }
 
-void DatabaseConnection::set_user_version(uint32_t version) {
+void Connection::set_user_version(uint32_t version) {
     using namespace std::string_literals;
 
     if (!this->execute_statement("PRAGMA user_version = "s + std::to_string(version))) {
         throw std::runtime_error("Could not set user_version in database");
     }
 }
+
+} // namespace everest::db::sqlite
