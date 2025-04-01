@@ -62,12 +62,10 @@ int Statement::bind_int(const std::string& param, const int val) {
 }
 
 int Statement::bind_int64(const int idx, const int64_t val) {
-    std::cout << "val: " << val << std::endl;
     return sqlite3_bind_int64(this->stmt, idx, val);
 }
 
 int Statement::bind_int64(const std::string& param, const int64_t val) {
-    std::cout << "val2: " << val << std::endl;
     int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
