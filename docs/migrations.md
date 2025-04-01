@@ -4,23 +4,6 @@
 
 Updating the schema of a database that is in production should always be done with great care. To facilitate this we make use of migration files. These are files that can be executed in sequence to get to the desired schema version that works with that version of the software.
 
-## How to use
-
-Using the database migrations is fairly straightforward. Most of the details are handled by the library itself. To setup these migrations there are a few things to consider:
-
-- The user of the library is responsible for getting the migration files on the target. They also need to make sure that even on a downgrade the migration files stay on target. This is because downgrading the database schema from the "newer" version makes use of the files that are stored.
-- The user of the library is also responsible of making a backup of the database before running the migration. It is designed in a way that migration failures shall not alter the database but this is not guaranteed.
-  - Since the migrations are applied on construction of the charge_point, the backup needs to be made before constructing it.
-- Old databases need to be removed so a new database can be created using the migrations. This is to make sure that there is exact control over the schema of the database and no remains are present.
-
-**Requirements:**
-
-- Minimal SQLite version 3.35.0 for `ALTER TABLE DROP COLUMN` support
-
-## How to contribute changes to the database schema
-
-If changes need to be made to the database schema this can be done by adding new migration files in the relevant `config/vxx/core_migrations` folder.
-
 ### File format
 
 The filenames must have the following format:  
@@ -38,9 +21,9 @@ The schema changes should be done in such a way that the data present in the dat
 
 ### Unit testing
 
-There are already unit tests present that will automatically perform a full up and down migration with all the intermediate steps in the `core_migrations` folder. The files will be auto detected for this.
+We recommend to write specific unit tests for your migration that validate that the changes you have made have the expected outcome. Examples for this are located in
+[test_database_schema_updater.cpp](../tests/test_database_schema_updater.cpp)
 
-Additionally it is recommended to write specific unit tests for your migration that validate that the changes you have made have the expected outcome.
 
 ## Design consideration
 
@@ -55,3 +38,80 @@ Additionally it is recommended to write specific unit tests for your migration t
 - Each migration needs to be done in a single SQL transaction so we don't end up with changes being applied only part of the way.
 - Before applying migrations a backup shall be made of the database so that in case we fail we can rollback to that version.
 - Add a CICD check that validates if all the migrations can be executed.
+
+## How to use
+
+Using the database migrations is fairly straightforward. Most of the details are handled by the library itself. To set up these migrations, there are a few things to consider:
+
+- **Responsibility of the consuming project**:
+  - The consuming library or application is responsible for **shipping the appropriate migration files** with the target system (e.g., embedded device or deployment target).
+  - These files **must be present** during upgrades *and* downgrades, since rolling back requires access to older down-migration scripts.
+  - It is **strongly recommended** to back up the database before initiating a migration. While migrations are wrapped in transactions and should roll back on failure, this is not guaranteed in all edge cases.
+  - **Old database files should be removed** when reinitializing a database to ensure a clean start with a well-defined schema.
+  - All migrations should be performed **before any logic that depends on the schema is executed**.
+
+## Integration for libraries using libsqlite
+
+If your library or module integrates `libsqlite`, here's how you can hook into the migration support to safely handle schema changes between releases:
+
+### 1. Place your migration files
+
+Organize your SQL migration scripts in a dedicated folder in your repository, for example:
+
+```
+my_library/
+├── migrations/
+│   ├── 1_up.sql
+│   ├── 2_up.sql
+│   ├── 2_down.sql
+│   └── ...
+```
+
+Follow the filename convention:
+- `X_up.sql` applies a schema change to version X.
+- `X_down.sql` undoes that same schema change.
+
+### 2. Use `DatabaseSchemaUpdater` during initialization
+
+Before you use any tables or schema-specific logic in your module, run the schema updater:
+
+```cpp
+#include <database/sqlite/sqlite_schema_updater.hpp>
+
+DatabaseConnection db("path/to/database.db");
+db.open_connection();
+
+DatabaseSchemaUpdater updater(&db);
+const uint32_t TARGET_SCHEMA_VERSION = /* set via CMake or hardcoded */;
+
+if (!updater.apply_migration_files("path/to/migrations", TARGET_SCHEMA_VERSION)) {
+    throw std::runtime_error("Migration failed");
+}
+```
+
+You can derive `TARGET_SCHEMA_VERSION` from a CMake definition if you use `CollectMigrationFiles.cmake`.
+
+### 3. Add `CollectMigrationFiles.cmake` to your build
+
+In your CMake project:
+
+```cmake
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/CollectMigrationFiles.cmake)
+
+collect_migration_files(
+  LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/migrations"
+  INSTALL_DESTINATION "share/my_library/migrations"
+)
+
+# Now TARGET_MIGRATION_FILE_VERSION is available to use:
+target_compile_definitions(my_library
+  PRIVATE TARGET_SCHEMA_VERSION=${TARGET_MIGRATION_FILE_VERSION}
+)
+```
+
+This ensures that the latest schema version is compiled into your library, which is crucial for downgrade support.
+
+We recommend:
+- Testing that your target schema version can be reached from any older version.
+- Testing rollback paths.
+- Using real data snapshots where applicable.

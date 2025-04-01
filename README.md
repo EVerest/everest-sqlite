@@ -33,7 +33,7 @@ include/database/
 
 - **SQLite3**
 - **nlohmann_json**
-- [everest-cmake](https://github.com/EVerest/everest-cmake)
+- **[everest-cmake](https://github.com/EVerest/everest-cmake)**
 - (Optional) **GTest** for unit testing
 
 ### Build
@@ -51,9 +51,10 @@ make
 To build with unit tests:
 
 ```bash
-make -DLIBSQLITE_BUILD_TESTING=ON ..
+cmake -DBUILD_TESTING=ON ..
 make
 ctest
+make libsqlite_gcovr_coverage # to generate a coverage report
 ```
 
 ## Usage
