@@ -137,8 +137,7 @@ std::optional<std::vector<MigrationFile>> get_migration_file_sequence(const fs::
 SchemaUpdater::SchemaUpdater(ConnectionInterface* database) noexcept : database(database) {
 }
 
-bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directory,
-                                                  uint32_t target_schema_version) {
+bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directory, uint32_t target_schema_version) {
     if (!fs::is_directory(migration_file_directory)) {
         std::cout << "Migration files must be in a directory: " << migration_file_directory.c_str() << std::endl;
         return false;
