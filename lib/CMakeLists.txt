@@ -20,3 +20,5 @@ target_include_directories(everest_sqlite
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+target_compile_features(everest_sqlite PRIVATE cxx_std_17)
