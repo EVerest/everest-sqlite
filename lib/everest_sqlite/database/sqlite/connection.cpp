@@ -3,8 +3,8 @@
 
 #include <iostream>
 
-#include <database/exceptions.hpp>
-#include <database/sqlite/connection.hpp>
+#include <everest_sqlite/database/exceptions.hpp>
+#include <everest_sqlite/database/sqlite/connection.hpp>
 
 using namespace std::chrono_literals;
 using namespace std::string_literals;

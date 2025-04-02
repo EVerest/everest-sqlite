@@ -9,7 +9,7 @@
 #include <mutex>
 #include <sqlite3.h>
 
-#include <database/sqlite/statement.hpp>
+#include <everest_sqlite/database/sqlite/statement.hpp>
 
 namespace fs = std::filesystem;
 namespace fsstd = std;
