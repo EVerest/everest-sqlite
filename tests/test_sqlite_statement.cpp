@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#include <database/exceptions.hpp>
-#include <database/sqlite/connection.hpp>
-#include <database/sqlite/statement.hpp>
+#include <everest/database/exceptions.hpp>
+#include <everest/database/sqlite/connection.hpp>
+#include <everest/database/sqlite/statement.hpp>
 #include <gtest/gtest.h>
 
 #include <filesystem>

@@ -2,7 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "database_testing_utils.hpp"
-#include <database/sqlite/schema_updater.hpp>
+#include <everest/database/sqlite/schema_updater.hpp>
 #include <fstream>
 
 namespace everest::db::sqlite {

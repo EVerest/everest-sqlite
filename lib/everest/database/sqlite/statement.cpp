@@ -3,8 +3,8 @@
 
 #include <iostream>
 
-#include <everest_sqlite/database/exceptions.hpp>
-#include <everest_sqlite/database/sqlite/statement.hpp>
+#include <everest/database/exceptions.hpp>
+#include <everest/database/sqlite/statement.hpp>
 
 namespace everest::db::sqlite {
 

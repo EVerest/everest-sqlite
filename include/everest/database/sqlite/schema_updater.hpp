@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <everest_sqlite/database/sqlite/connection.hpp>
+#include <everest/database/sqlite/connection.hpp>
 
 namespace everest::db::sqlite {
 

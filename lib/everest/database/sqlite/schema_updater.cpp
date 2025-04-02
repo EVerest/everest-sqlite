@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#include <everest_sqlite/database/sqlite/schema_updater.hpp>
+#include <everest/database/sqlite/schema_updater.hpp>
 
 #include <fstream>
 #include <iostream>

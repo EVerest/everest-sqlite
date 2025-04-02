@@ -4,9 +4,9 @@ add_library(everest::sqlite ALIAS everest_sqlite)
 
 target_sources(everest_sqlite
     PRIVATE
-        everest_sqlite/database/sqlite/statement.cpp
-        everest_sqlite/database/sqlite/connection.cpp
-        everest_sqlite/database/sqlite/schema_updater.cpp
+        everest/database/sqlite/statement.cpp
+        everest/database/sqlite/connection.cpp
+        everest/database/sqlite/schema_updater.cpp
 )
 
 target_link_libraries(everest_sqlite
