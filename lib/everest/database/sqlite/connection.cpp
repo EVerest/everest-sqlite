@@ -2,8 +2,8 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include <chrono>
-#include <iostream>
 
+#include <everest/logging.hpp>
 #include <everest/database/exceptions.hpp>
 #include <everest/database/sqlite/connection.hpp>
 
@@ -59,7 +59,7 @@ Connection::~Connection() {
 
 bool Connection::open_connection() {
     if (this->open_count.fetch_add(1) != 0) {
-        std::cout << "Connection already opened" << std::endl;
+        EVLOG_debug << "Connection already opened";
         return true;
     }
 
@@ -73,10 +73,10 @@ bool Connection::open_connection() {
 
     if (sqlite3_open_v2(this->database_file_path.c_str(), &this->db,
                         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI, nullptr) != SQLITE_OK) {
-        std::cout << "Error opening database at " << this->database_file_path << ": " << sqlite3_errmsg(db);
+        EVLOG_error << "Error opening database at " << this->database_file_path << ": " << sqlite3_errmsg(db);
         return false;
     }
-    std::cout << "Established connection to database: " << this->database_file_path << std::endl;
+    EVLOG_info << "Established connection to database: " << this->database_file_path;
     return true;
 }
 
@@ -86,12 +86,12 @@ bool Connection::close_connection() {
 
 bool Connection::close_connection_internal(bool force_close) {
     if (!force_close && this->open_count.fetch_sub(1) != 1) {
-        std::cout << "Connection should remain open for other users" << std::endl;
+        EVLOG_debug << "Connection should remain open for other users";
         return true;
     }
 
     if (this->db == nullptr) {
-        std::cout << "Database file " << this->database_file_path << " is already closed" << std::endl;
+        EVLOG_info << "Database file " << this->database_file_path << " is already closed";
         return true;
     }
 
@@ -102,11 +102,11 @@ bool Connection::close_connection_internal(bool force_close) {
     }
 
     if (sqlite3_close_v2(this->db) != SQLITE_OK) {
-        std::cout << "Error closing database file " << this->database_file_path << ": " << this->get_error_message()
-                  << std::endl;
+        EVLOG_error << "Error closing database file " << this->database_file_path << ": " << this->get_error_message()
+                 ;
         return false;
     }
-    std::cout << "Successfully closed database: " << this->database_file_path << std::endl;
+    EVLOG_info << "Successfully closed database: " << this->database_file_path;
     this->db = nullptr;
     return true;
 }
@@ -114,7 +114,7 @@ bool Connection::close_connection_internal(bool force_close) {
 bool Connection::execute_statement(const std::string& statement) {
     char* err_msg = nullptr;
     if (sqlite3_exec(this->db, statement.c_str(), NULL, NULL, &err_msg) != SQLITE_OK) {
-        std::cout << "Could not execute statement \"" << statement << "\": " << err_msg;
+        EVLOG_error << "Could not execute statement \"" << statement << "\": " << err_msg;
         sqlite3_free(err_msg);
         return false;
     }

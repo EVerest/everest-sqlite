@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
+#include <everest/logging.hpp>
 #include <everest/database/sqlite/schema_updater.hpp>
 
 #include <fstream>
-#include <iostream>
 #include <regex>
 
 namespace everest::db::sqlite {
@@ -71,11 +71,11 @@ void filter_and_sort_migration_file_list(std::vector<MigrationFile>& list, Direc
 bool is_migration_file_list_valid(std::vector<MigrationFile>& list, uint32_t max_version) {
     auto expected_files = (max_version * 2) - 1;
     if (list.size() < expected_files) {
-        std::cout << "Expected " << expected_files << " files but only found: " << list.size() << std::endl;
+        EVLOG_error << "Expected " << expected_files << " files but only found: " << list.size();
         return false;
     }
     if (list.size() % 2 == 0) {
-        std::cout << "Nr of migration files should always be uneven: 1 initial file + n pairs" << std::endl;
+        EVLOG_error << "Nr of migration files should always be uneven: 1 initial file + n pairs";
         return false;
     }
 
@@ -84,7 +84,7 @@ bool is_migration_file_list_valid(std::vector<MigrationFile>& list, uint32_t max
     });
 
     if (list.at(0).version != 1 or list.at(0).direction != Direction::Up) {
-        std::cout << "Invalid initial migration file" << std::endl;
+        EVLOG_error << "Invalid initial migration file";
         return false;
     }
 
@@ -93,13 +93,13 @@ bool is_migration_file_list_valid(std::vector<MigrationFile>& list, uint32_t max
         const auto& up = list.at(i);
         const auto& down = list.at(i + 1);
         if (up.version != expected_version || up.direction != Direction::Up) {
-            std::cout << "Expected migration file " << expected_version << "_up.sql but got: " << up.path.filename()
-                      << std::endl;
+            EVLOG_error << "Expected migration file " << expected_version << "_up.sql but got: " << up.path.filename()
+                     ;
             return false;
         }
         if (down.version != expected_version || down.direction != Direction::Down) {
-            std::cout << "Expected migration file " << expected_version << "_down.sql but got: " << down.path.filename()
-                      << std::endl;
+            EVLOG_error << "Expected migration file " << expected_version << "_down.sql but got: " << down.path.filename()
+                     ;
             return false;
         }
     }
@@ -111,10 +111,10 @@ std::optional<std::vector<MigrationFile>> get_migration_file_sequence(const fs::
                                                                       uint32_t target_version) {
     auto list = get_migration_file_list(migration_file_directory);
 
-    std::cout << "Migration list:" << std::endl;
+    EVLOG_debug << "Migration list:";
 
     for (auto& item : list) {
-        std::cout << item << std::endl;
+        EVLOG_debug << item;
     }
 
     if (!is_migration_file_list_valid(list, std::max(current_version, target_version))) {
@@ -126,10 +126,10 @@ std::optional<std::vector<MigrationFile>> get_migration_file_sequence(const fs::
 
     filter_and_sort_migration_file_list(list, direction, lowest, highest);
 
-    std::cout << "Migration files to apply:" << std::endl;
+    EVLOG_info << "Migration files to apply:";
 
     for (auto& item : list) {
-        std::cout << item << std::endl;
+        EVLOG_info << item;
     }
     return list;
 }
@@ -139,12 +139,12 @@ SchemaUpdater::SchemaUpdater(ConnectionInterface* database) noexcept : database(
 
 bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directory, uint32_t target_schema_version) {
     if (!fs::is_directory(migration_file_directory)) {
-        std::cout << "Migration files must be in a directory: " << migration_file_directory.c_str() << std::endl;
+        EVLOG_error << "Migration files must be in a directory: " << migration_file_directory.c_str();
         return false;
     }
 
     if (target_schema_version == 0) {
-        std::cout << "Migration target_version 0 is invalid" << std::endl;
+        EVLOG_error << "Migration target_version 0 is invalid";
         return false;
     }
 
@@ -153,15 +153,15 @@ bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directo
     try {
         this->database->open_connection();
         current_version = this->database->get_user_version();
-        std::cout << "Target version: " << target_schema_version << ", current version: " << current_version
-                  << std::endl;
+        EVLOG_info << "Target version: " << target_schema_version << ", current version: " << current_version
+                 ;
     } catch (std::runtime_error& e) {
-        std::cout << "Failure during migration file apply: " << e.what() << std::endl;
+        EVLOG_error << "Failure during migration file apply: " << e.what();
         return false;
     }
 
     if (current_version == target_schema_version) {
-        std::cout << "No migrations to apply since versions match" << std::endl;
+        EVLOG_info << "No migrations to apply since versions match";
         this->database->close_connection();
         return true;
     }
@@ -176,7 +176,7 @@ bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directo
         get_migration_file_sequence(migration_file_directory, direction, current_version, target_schema_version);
 
     if (!list.has_value()) {
-        std::cout << "Missing migration files in sequence, no actions performed" << std::endl;
+        EVLOG_error << "Missing migration files in sequence, no actions performed";
         this->database->close_connection();
         return false;
     }
@@ -192,7 +192,7 @@ bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directo
             init_sql << stream.rdbuf();
 
             if (!this->database->execute_statement(init_sql.str())) {
-                std::cout << "Could not apply migration file " << item.path << std::endl;
+                EVLOG_error << "Could not apply migration file " << item.path;
                 throw std::runtime_error("Database access error");
             }
         }
@@ -200,7 +200,7 @@ bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directo
         this->database->set_user_version(target_schema_version);
         transaction->commit();
     } catch (std::exception& e) {
-        std::cout << "Failure during migration file apply: " << e.what() << std::endl;
+        EVLOG_error << "Failure during migration file apply: " << e.what();
         retval = false;
     }
 

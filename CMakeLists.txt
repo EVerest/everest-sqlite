@@ -30,6 +30,7 @@ if (NOT DISABLE_EDM)
     set(EVEREST_SQLITE_INSTALL OFF)
 else()
     find_package(nlohmann_json REQUIRED)
+    find_package(everest-log REQUIRED)
     if (EVEREST_SQLITE_BUILD_TESTING)
         include(FetchContent)
         FetchContent_Declare(
@@ -68,6 +69,8 @@ if (EVEREST_SQLITE_INSTALL)
         NAME everest-sqlite
         NAMESPACE everest
         EXPORT everest_sqlite-targets
+        ADDITIONAL_CONTENT
+            "find_dependency(everest-log)"
     )
 endif()
 

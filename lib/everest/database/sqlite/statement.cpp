@@ -2,8 +2,8 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include <cstddef>
-#include <iostream>
 
+#include <everest/logging.hpp>
 #include <everest/database/exceptions.hpp>
 #include <everest/database/sqlite/statement.hpp>
 #include <sqlite3.h>
@@ -12,7 +12,7 @@ namespace everest::db::sqlite {
 
 Statement::Statement(sqlite3* db, const std::string& query) : db(db), stmt(nullptr) {
     if (sqlite3_prepare_v2(db, query.c_str(), query.size(), &this->stmt, nullptr) != SQLITE_OK) {
-        std::cerr << sqlite3_errmsg(db) << std::endl;
+        EVLOG_error << sqlite3_errmsg(db);
         throw QueryExecutionException("Could not prepare statement for database.");
     }
 }
@@ -20,7 +20,7 @@ Statement::Statement(sqlite3* db, const std::string& query) : db(db), stmt(nullp
 Statement::~Statement() {
     if (this->stmt != nullptr) {
         if (sqlite3_finalize(this->stmt) != SQLITE_OK) {
-            std::cout << "Error finalizing statement: " << sqlite3_errmsg(this->db) << std::endl;
+            EVLOG_error << "Error finalizing statement: " << sqlite3_errmsg(this->db);
         }
     }
 }
