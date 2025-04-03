@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
+#include <cstddef>
 #include <iostream>
 
 #include <everest/database/exceptions.hpp>
 #include <everest/database/sqlite/statement.hpp>
+#include <sqlite3.h>
 
 namespace everest::db::sqlite {
 
@@ -103,6 +105,38 @@ int Statement::get_number_of_rows() {
 
 int Statement::column_type(const int idx) {
     return sqlite3_column_type(this->stmt, idx);
+}
+
+SqliteVariant Statement::column_variant(const std::string& name) {
+    SqliteVariant ret{};
+    int column_count = sqlite3_column_count(this->stmt);
+    for (int i = 0; i < column_count; ++i) {
+        auto val = sqlite3_column_name(this->stmt, i);
+        if (val == nullptr) {
+            return ret;
+        }
+        std::string column_name{val};
+        if (0 == column_name.compare(name)) {
+            switch (sqlite3_column_type(this->stmt, i)) {
+            case SQLITE_INTEGER:
+                ret = column_int64(i);
+                break;
+            case SQLITE_FLOAT:
+                ret = column_double(i);
+                break;
+            case SQLITE_BLOB:
+                // For now we will treat blob as text until this feature is needed
+            case SQLITE_TEXT:
+                ret = column_text(i);
+                break;
+            case SQLITE_NULL:
+            default:
+                break;
+            }
+            break;
+        }
+    }
+    return ret;
 }
 
 std::string Statement::column_text(const int idx) {

@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include <chrono>
 #include <optional>
 #include <string>
+#include <variant>
 
 #include <sqlite3.h>
 
@@ -16,6 +16,9 @@ enum class SQLiteString {
     Static,   /// Indicates string will be valid for the whole statement
     Transient /// Indicates string might change during statement, SQLite should make a copy
 };
+
+/// @bried Variant type for possible return value based on name getter
+using SqliteVariant = std::variant<std::monostate, int, double, int64_t, std::string>;
 
 /// \brief Interface for Statement wrapper class that handles finalization, step, binding and column access of
 /// sqlite3_stmt
@@ -41,6 +44,7 @@ public:
 
     virtual int get_number_of_rows() = 0;
     virtual int column_type(const int idx) = 0;
+    virtual SqliteVariant column_variant(const std::string& name) = 0;
     virtual std::string column_text(const int idx) = 0;
     virtual std::optional<std::string> column_text_nullable(const int idx) = 0;
     virtual int column_int(const int idx) = 0;
@@ -76,6 +80,7 @@ public:
 
     int get_number_of_rows() override;
     int column_type(const int idx) override;
+    SqliteVariant column_variant(const std::string& name) override;
     std::string column_text(const int idx) override;
     std::optional<std::string> column_text_nullable(const int idx) override;
     int column_int(const int idx) override;

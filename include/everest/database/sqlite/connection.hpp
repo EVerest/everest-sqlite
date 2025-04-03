@@ -12,7 +12,6 @@
 #include <everest/database/sqlite/statement.hpp>
 
 namespace fs = std::filesystem;
-namespace fsstd = std;
 
 namespace everest::db::sqlite {
 
