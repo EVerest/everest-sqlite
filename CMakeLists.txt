@@ -15,15 +15,15 @@ option(EVEREST_SQLITE_INSTALL "Install the library (shared data might be install
 
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(EVEREST_SQLITE_BUILD_TESTING ON)
+    # this policy allows us to link gcov to targets defined in other directories
+    if(POLICY CMP0079)
+        set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
+    endif()
 endif()
 
 find_package(SQLite3 REQUIRED)
 
 if (NOT DISABLE_EDM)
-    if (EVEREST_SQLITE_BUILD_TESTING)
-        evc_include(CodeCoverage)
-        append_coverage_compiler_flags()
-    endif()
     evc_setup_edm()
 
     # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
