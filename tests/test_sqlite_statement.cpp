@@ -89,7 +89,8 @@ TEST_F(SQLiteStatementTest, ResetAndReuseStatement) {
 
 TEST_F(SQLiteStatementTest, BindByNameAndIndexConsistency) {
     auto stmt_by_index = db->new_statement("INSERT INTO test_table (name, value, score) VALUES (?, ?, ?);");
-    auto stmt_by_name = db->new_statement("INSERT INTO test_table (name, value, score) VALUES (:name, :value, :score);");
+    auto stmt_by_name =
+        db->new_statement("INSERT INTO test_table (name, value, score) VALUES (:name, :value, :score);");
 
     stmt_by_index->bind_text(1, "index_row");
     stmt_by_index->bind_int(2, 123);
@@ -107,7 +108,7 @@ TEST_F(SQLiteStatementTest, BindByNameAndIndexConsistency) {
 }
 
 TEST_F(SQLiteStatementTest, BindInt64AndReadBack) {
-    int64_t large_value = 9223372036854775807LL;  // max int64
+    int64_t large_value = 9223372036854775807LL; // max int64
 
     auto insert_stmt = db->new_statement("INSERT INTO test_table (name, value, score) VALUES (?, ?, ?);");
     insert_stmt->bind_text(1, "int64_test");
@@ -158,7 +159,8 @@ TEST_F(SQLiteStatementTest, GetNumberOfColumnsInRow) {
 }
 
 TEST_F(SQLiteStatementTest, ColumnTypeChecks) {
-    auto insert_stmt = db->new_statement("INSERT INTO test_table (name, value, score) VALUES ('type_test', 999, 9.99);");
+    auto insert_stmt =
+        db->new_statement("INSERT INTO test_table (name, value, score) VALUES ('type_test', 999, 9.99);");
     ASSERT_EQ(insert_stmt->step(), SQLITE_DONE);
 
     auto select_stmt = db->new_statement("SELECT name, value, score FROM test_table WHERE name = 'type_test';");

@@ -3,9 +3,9 @@
 
 #include <chrono>
 
-#include <everest/logging.hpp>
 #include <everest/database/exceptions.hpp>
 #include <everest/database/sqlite/connection.hpp>
+#include <everest/logging.hpp>
 
 using namespace std::chrono_literals;
 using namespace std::string_literals;
@@ -102,8 +102,7 @@ bool Connection::close_connection_internal(bool force_close) {
     }
 
     if (sqlite3_close_v2(this->db) != SQLITE_OK) {
-        EVLOG_error << "Error closing database file " << this->database_file_path << ": " << this->get_error_message()
-                 ;
+        EVLOG_error << "Error closing database file " << this->database_file_path << ": " << this->get_error_message();
         return false;
     }
     EVLOG_info << "Successfully closed database: " << this->database_file_path;

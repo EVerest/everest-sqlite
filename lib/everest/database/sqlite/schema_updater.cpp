@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#include <everest/logging.hpp>
 #include <everest/database/sqlite/schema_updater.hpp>
+#include <everest/logging.hpp>
 
 #include <fstream>
 #include <regex>
@@ -93,13 +93,12 @@ bool is_migration_file_list_valid(std::vector<MigrationFile>& list, uint32_t max
         const auto& up = list.at(i);
         const auto& down = list.at(i + 1);
         if (up.version != expected_version || up.direction != Direction::Up) {
-            EVLOG_error << "Expected migration file " << expected_version << "_up.sql but got: " << up.path.filename()
-                     ;
+            EVLOG_error << "Expected migration file " << expected_version << "_up.sql but got: " << up.path.filename();
             return false;
         }
         if (down.version != expected_version || down.direction != Direction::Down) {
-            EVLOG_error << "Expected migration file " << expected_version << "_down.sql but got: " << down.path.filename()
-                     ;
+            EVLOG_error << "Expected migration file " << expected_version
+                        << "_down.sql but got: " << down.path.filename();
             return false;
         }
     }
@@ -153,8 +152,7 @@ bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directo
     try {
         this->database->open_connection();
         current_version = this->database->get_user_version();
-        EVLOG_info << "Target version: " << target_schema_version << ", current version: " << current_version
-                 ;
+        EVLOG_info << "Target version: " << target_schema_version << ", current version: " << current_version;
     } catch (std::runtime_error& e) {
         EVLOG_error << "Failure during migration file apply: " << e.what();
         return false;

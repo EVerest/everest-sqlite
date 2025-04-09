@@ -3,9 +3,9 @@
 
 #include <cstddef>
 
-#include <everest/logging.hpp>
 #include <everest/database/exceptions.hpp>
 #include <everest/database/sqlite/statement.hpp>
+#include <everest/logging.hpp>
 #include <sqlite3.h>
 
 namespace everest::db::sqlite {
