@@ -4,6 +4,7 @@
 #include <cstddef>
 
 #include <everest/database/exceptions.hpp>
+#include <everest/database/sqlite/helpers.hpp>
 #include <everest/database/sqlite/statement.hpp>
 #include <everest/logging.hpp>
 #include <sqlite3.h>
@@ -11,7 +12,7 @@
 namespace everest::db::sqlite {
 
 Statement::Statement(sqlite3* db, const std::string& query) : db(db), stmt(nullptr) {
-    if (sqlite3_prepare_v2(db, query.c_str(), query.size(), &this->stmt, nullptr) != SQLITE_OK) {
+    if (sqlite3_prepare_v2(db, query.c_str(), clamp_to<int>(query.size()), &this->stmt, nullptr) != SQLITE_OK) {
         EVLOG_error << sqlite3_errmsg(db);
         throw QueryExecutionException("Could not prepare statement for database.");
     }
@@ -39,12 +40,12 @@ int Statement::changes() {
 }
 
 int Statement::bind_text(const int idx, const std::string& val, SQLiteString lifetime) {
-    return sqlite3_bind_text(this->stmt, idx, val.c_str(), val.length(),
+    return sqlite3_bind_text(this->stmt, idx, val.c_str(), clamp_to<int>(val.length()),
                              lifetime == SQLiteString::Static ? SQLITE_STATIC : SQLITE_TRANSIENT);
 }
 
 int Statement::bind_text(const std::string& param, const std::string& val, SQLiteString lifetime) {
-    int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
+    const int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
     }
@@ -56,7 +57,7 @@ int Statement::bind_int(const int idx, const int val) {
 }
 
 int Statement::bind_int(const std::string& param, const int val) {
-    int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
+    const int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
     }
@@ -68,7 +69,7 @@ int Statement::bind_int64(const int idx, const int64_t val) {
 }
 
 int Statement::bind_int64(const std::string& param, const int64_t val) {
-    int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
+    const int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
     }
@@ -80,7 +81,7 @@ int Statement::bind_double(const int idx, const double val) {
 }
 
 int Statement::bind_double(const std::string& param, const double val) {
-    int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
+    const int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
     }
@@ -92,7 +93,7 @@ int Statement::bind_null(const int idx) {
 }
 
 int Statement::bind_null(const std::string& param) {
-    int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
+    const int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
     if (index <= 0) {
         throw std::out_of_range("Parameter not found in SQL query");
     }
@@ -109,14 +110,14 @@ int Statement::column_type(const int idx) {
 
 SqliteVariant Statement::column_variant(const std::string& name) {
     SqliteVariant ret{};
-    int column_count = sqlite3_column_count(this->stmt);
+    const int column_count = sqlite3_column_count(this->stmt);
     for (int i = 0; i < column_count; ++i) {
-        auto val = sqlite3_column_name(this->stmt, i);
+        const auto val = sqlite3_column_name(this->stmt, i);
         if (val == nullptr) {
             return ret;
         }
-        std::string column_name{val};
-        if (0 == column_name.compare(name)) {
+        const std::string column_name{val};
+        if (name == column_name) {
             switch (sqlite3_column_type(this->stmt, i)) {
             case SQLITE_INTEGER:
                 ret = column_int64(i);
@@ -147,16 +148,15 @@ std::optional<std::string> Statement::column_text_nullable(const int idx) {
     auto p = sqlite3_column_text(this->stmt, idx);
     if (p != nullptr) {
         return reinterpret_cast<const char*>(p);
-    } else {
-        return std::optional<std::string>{};
     }
+    return std::optional<std::string>{};
 }
 
 int Statement::column_int(const int idx) {
     return sqlite3_column_int(this->stmt, idx);
 }
 
-int64_t Statement::column_int64(const int64_t idx) {
+int64_t Statement::column_int64(const int idx) {
     return sqlite3_column_int64(this->stmt, idx);
 }
 

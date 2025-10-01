@@ -13,10 +13,9 @@ class Exception : public std::exception {
 public:
     explicit Exception(const std::string& message) : msg(message) {
     }
-    virtual ~Exception() noexcept {
-    }
+    ~Exception() noexcept override = default;
 
-    virtual const char* what() const noexcept override {
+    [[nodiscard]] const char* what() const noexcept override {
         return msg.c_str();
     }
 
