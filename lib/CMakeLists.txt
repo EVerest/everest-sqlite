@@ -12,7 +12,6 @@ target_sources(everest_sqlite
 target_link_libraries(everest_sqlite
     PRIVATE
         SQLite::SQLite3
-        nlohmann_json::nlohmann_json
 )
 
 target_include_directories(everest_sqlite

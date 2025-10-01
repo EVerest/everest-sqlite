@@ -34,7 +34,6 @@ The recommended way to build this project is to use EVerests dependency manager 
 ### Dependencies
 
 - **SQLite3**
-- **nlohmann_json**
 - (Optional) **[everest-cmake](https://github.com/EVerest/everest-cmake)**
 - (Optional) **GTest** for unit testing
 
