@@ -33,14 +33,14 @@ public:
     void commit() override {
         const auto retval = this->database.execute_statement("COMMIT TRANSACTION");
         this->mutex.unlock();
-        if (retval == false) {
+        if (not retval) {
             throw QueryExecutionException(this->database.get_error_message());
         }
     }
     void rollback() override {
         const auto retval = this->database.execute_statement("ROLLBACK TRANSACTION");
         this->mutex.unlock();
-        if (retval == false) {
+        if (not retval) {
             throw QueryExecutionException(this->database.get_error_message());
         }
     }
@@ -112,7 +112,7 @@ bool Connection::close_connection_internal(bool force_close) {
 
 bool Connection::execute_statement(const std::string& statement) {
     char* err_msg = nullptr;
-    if (sqlite3_exec(this->db, statement.c_str(), NULL, NULL, &err_msg) != SQLITE_OK) {
+    if (sqlite3_exec(this->db, statement.c_str(), nullptr, nullptr, &err_msg) != SQLITE_OK) {
         EVLOG_error << "Could not execute statement \"" << statement << "\": " << err_msg;
         sqlite3_free(err_msg);
         return false;

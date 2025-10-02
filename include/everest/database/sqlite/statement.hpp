@@ -48,7 +48,7 @@ public:
     virtual std::string column_text(const int idx) = 0;
     virtual std::optional<std::string> column_text_nullable(const int idx) = 0;
     virtual int column_int(const int idx) = 0;
-    virtual int64_t column_int64(const int64_t idx) = 0;
+    virtual int64_t column_int64(const int idx) = 0;
     virtual double column_double(const int idx) = 0;
 };
 
@@ -60,7 +60,7 @@ private:
 
 public:
     Statement(sqlite3* db, const std::string& query);
-    ~Statement();
+    ~Statement() override;
 
     int step() override;
     int reset() override;
@@ -84,7 +84,7 @@ public:
     std::string column_text(const int idx) override;
     std::optional<std::string> column_text_nullable(const int idx) override;
     int column_int(const int idx) override;
-    int64_t column_int64(const int64_t) override;
+    int64_t column_int64(const int idx) override;
     double column_double(const int idx) override;
 };
 

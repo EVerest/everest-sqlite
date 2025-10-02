@@ -26,16 +26,17 @@ std::ostream& operator<<(std::ostream& os, const MigrationFile& info) {
     return os;
 }
 
+namespace {
 std::vector<MigrationFile> get_migration_file_list(const fs::path& migration_file_directory) {
-    std::regex filename_pattern{R"(^(\d+)_(up|down)(-[ \S]+|)\.sql$)"};
+    const std::regex filename_pattern{R"(^(\d+)_(up|down)(-[ \S]+|)\.sql$)"};
 
     std::vector<MigrationFile> result;
 
-    for (auto& entry : fs::directory_iterator(migration_file_directory)) {
+    for (const auto& entry : fs::directory_iterator(migration_file_directory)) {
         if (entry.is_regular_file() and entry.file_size() > 0) {
             const fs::path& path = entry.path();
             std::cmatch match;
-            std::string filename =
+            const std::string filename =
                 path.filename(); // Store in a variable otherwise after the match the string temporary is gone
             if (std::regex_match(filename.c_str(), match, filename_pattern) and match.size() == 4) {
                 // [0] = whole match
@@ -62,9 +63,8 @@ void filter_and_sort_migration_file_list(std::vector<MigrationFile>& list, Direc
     std::sort(list.begin(), list.end(), [direction](const auto& a, const auto& b) {
         if (direction == Direction::Up) {
             return a.version < b.version;
-        } else {
-            return b.version < a.version;
         }
+        return b.version < a.version;
     });
 }
 
@@ -89,7 +89,7 @@ bool is_migration_file_list_valid(std::vector<MigrationFile>& list, uint32_t max
     }
 
     for (size_t i = 1; i < list.size(); i += 2) {
-        uint32_t expected_version = (i / 2) + 2;
+        const uint32_t expected_version = (i / 2) + 2;
         const auto& up = list.at(i);
         const auto& down = list.at(i + 1);
         if (up.version != expected_version || up.direction != Direction::Up) {
@@ -132,6 +132,7 @@ std::optional<std::vector<MigrationFile>> get_migration_file_sequence(const fs::
     }
     return list;
 }
+} // namespace
 
 SchemaUpdater::SchemaUpdater(ConnectionInterface* database) noexcept : database(database) {
 }
@@ -184,7 +185,7 @@ bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directo
         auto transaction = this->database->begin_transaction();
 
         for (const auto& item : list.value()) {
-            std::ifstream stream{item.path};
+            const std::ifstream stream{item.path};
             std::stringstream init_sql;
 
             init_sql << stream.rdbuf();

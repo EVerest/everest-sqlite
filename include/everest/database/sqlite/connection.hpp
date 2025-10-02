@@ -78,7 +78,7 @@ private:
 public:
     explicit Connection(const fs::path& database_file_path) noexcept;
 
-    virtual ~Connection();
+    ~Connection() override;
 
     bool open_connection() override;
     bool close_connection() override;
