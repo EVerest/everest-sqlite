@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(everest-sqlite VERSION 0.1.4
+project(everest-sqlite VERSION 0.1.5
         DESCRIPTION "SQLite wrapper for EVerest"
         LANGUAGES CXX C
 )
@@ -44,6 +44,7 @@ endif()
 # options
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
+option(EVEREST_SQLITE_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)
 
 add_subdirectory(lib)
 

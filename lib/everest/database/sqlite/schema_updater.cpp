@@ -33,11 +33,11 @@ std::vector<MigrationFile> get_migration_file_list(const fs::path& migration_fil
     std::vector<MigrationFile> result;
 
     for (const auto& entry : fs::directory_iterator(migration_file_directory)) {
-        if (entry.is_regular_file() and entry.file_size() > 0) {
+        if (entry.is_regular_file() and fs::file_size(entry) > 0) {
             const fs::path& path = entry.path();
             std::cmatch match;
             const std::string filename =
-                path.filename(); // Store in a variable otherwise after the match the string temporary is gone
+                path.filename().string(); // Store in a variable otherwise after the match the string temporary is gone
             if (std::regex_match(filename.c_str(), match, filename_pattern) and match.size() == 4) {
                 // [0] = whole match
                 // [1] = version id
@@ -185,7 +185,7 @@ bool SchemaUpdater::apply_migration_files(const fs::path& migration_file_directo
         auto transaction = this->database->begin_transaction();
 
         for (const auto& item : list.value()) {
-            const std::ifstream stream{item.path};
+            const std::ifstream stream{item.path.string()};
             std::stringstream init_sql;
 
             init_sql << stream.rdbuf();

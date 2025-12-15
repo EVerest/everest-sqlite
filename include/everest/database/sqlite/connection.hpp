@@ -4,14 +4,22 @@
 #pragma once
 
 #include <atomic>
+#ifndef EVEREST_SQLITE_USE_BOOST_FILESYSTEM
 #include <filesystem>
+#else
+#include <boost/filesystem.hpp>
+#endif
 #include <memory>
 #include <mutex>
 #include <sqlite3.h>
 
 #include <everest/database/sqlite/statement.hpp>
 
+#ifndef EVEREST_SQLITE_USE_BOOST_FILESYSTEM
 namespace fs = std::filesystem;
+#else
+namespace fs = boost::filesystem;
+#endif
 
 namespace everest::db::sqlite {
 
